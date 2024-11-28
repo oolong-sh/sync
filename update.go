@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"strings"
 )
 
 type CompareState byte
@@ -43,7 +44,7 @@ func (c *SyncClient) Update(files ...string) error {
 			if _, err := f.Write(data); err != nil {
 				return err
 			}
-			log.Printf("Wrote %s to %s (wrote to server)\n", data, path)
+			log.Printf("Wrote %s to %s (wrote to server)\n", truncateString(string(data)), path)
 		case Server:
 			f, err := c.SftpClient.Open(path)
 			if err != nil {
@@ -60,7 +61,7 @@ func (c *SyncClient) Update(files ...string) error {
 			if err := os.WriteFile(path, buffer.Bytes(), os.ModePerm); err != nil {
 				return err
 			}
-			log.Printf("Wrote %s to %s (wrote to client)\n", buffer.String(), path)
+			log.Printf("Wrote %s to %s (wrote to client)\n", truncateString(buffer.String()), path)
 		case NotExistLocal:
 			// TODO: delete from local (or not? -- multiple local instances -- keep log on server?)
 			// NOTE: probably use separate signal from watcher to handle deletions
@@ -74,4 +75,20 @@ func (c *SyncClient) Update(files ...string) error {
 	}
 
 	return nil
+}
+
+func truncateString(input string) string {
+	const maxLength = 15
+	newlineIndex := strings.Index(input, "\n")
+
+	if newlineIndex != -1 && newlineIndex < maxLength {
+		return input[:newlineIndex]
+	}
+
+	if len(input) > maxLength {
+		lines := strings.Count(input, "\n") + 1
+		return fmt.Sprintf("%s... (%d more lines)", input[:maxLength], lines)
+	}
+
+	return input
 }
