@@ -1,0 +1,8 @@
+# [sync]
+# host = "192.168.68.106"
+host = "kelsier"
+user = "patrick"
+port = 22
+private_key_path = "/home/patrick/.ssh/id_ed25519"
+
+# TODO: password
